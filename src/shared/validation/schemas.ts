@@ -51,6 +51,27 @@ export const createProviderSchema = z.object({
           path: ["customUserAgent"],
         });
       }
+      // [Oracle CONDITIONAL] consoleApiKey는 bailian-coding-plan 전용 필드.
+      // 다른 프로바이더 공통 규약으로 재사용하지 않는다.
+      const consoleApiKey = data.consoleApiKey;
+      if (
+        consoleApiKey !== undefined &&
+        consoleApiKey !== null &&
+        typeof consoleApiKey !== "string"
+      ) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "providerSpecificData.consoleApiKey must be a string",
+          path: ["consoleApiKey"],
+        });
+      }
+      if (typeof consoleApiKey === "string" && consoleApiKey.length > 10000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "providerSpecificData.consoleApiKey must be at most 10000 characters",
+          path: ["consoleApiKey"],
+        });
+      }
     }),
 });
 
@@ -1120,6 +1141,27 @@ export const updateProviderConnectionSchema = z
             code: z.ZodIssueCode.custom,
             message: "providerSpecificData.customUserAgent must be a string up to 500 chars",
             path: ["customUserAgent"],
+          });
+        }
+        // [Oracle CONDITIONAL] consoleApiKey는 bailian-coding-plan 전용 필드.
+        // 다른 프로바이더 공통 규약으로 재사용하지 않는다.
+        const consoleApiKey = data.consoleApiKey;
+        if (
+          consoleApiKey !== undefined &&
+          consoleApiKey !== null &&
+          typeof consoleApiKey !== "string"
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "providerSpecificData.consoleApiKey must be a string",
+            path: ["consoleApiKey"],
+          });
+        }
+        if (typeof consoleApiKey === "string" && consoleApiKey.length > 10000) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "providerSpecificData.consoleApiKey must be at most 10000 characters",
+            path: ["consoleApiKey"],
           });
         }
       }),

@@ -50,6 +50,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     delete result.accessToken;
     delete result.refreshToken;
     delete result.idToken;
+    if (result.providerSpecificData) {
+      delete result.providerSpecificData.consoleApiKey;
+    }
 
     return NextResponse.json({ connection: result });
   } catch (error) {
@@ -153,6 +156,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     delete result.accessToken;
     delete result.refreshToken;
     delete result.idToken;
+    if (result.providerSpecificData) {
+      delete result.providerSpecificData.consoleApiKey;
+    }
 
     // Auto sync to Cloud if enabled
     await syncToCloudIfEnabled();
