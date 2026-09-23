@@ -21,11 +21,20 @@ jobs:
           - platform: linux/amd64
             arch: amd64
             runner: ubuntu-24.04
+            memory: 10240
           - platform: linux/arm64
             arch: arm64
             runner: ubuntu-24.04-arm
+            memory: 12288
     steps:
       - uses: actions/checkout@v7
+      - name: Add build swap
+        if: matrix.arch == 'amd64'
+        run: |
+          sudo fallocate -l 12G /mnt/omniroute.swap
+          sudo chmod 600 /mnt/omniroute.swap
+          sudo mkswap /mnt/omniroute.swap
+          sudo swapon /mnt/omniroute.swap
       - uses: docker/setup-buildx-action@v4
       - uses: docker/login-action@v4.6.0
         with:
@@ -42,7 +51,7 @@ jobs:
           build-args: |
             OMNIROUTE_USE_TURBOPACK=0
             OMNIROUTE_BUILD_WORKERS=1
-            OMNIROUTE_BUILD_MEMORY_MB=5632
+            OMNIROUTE_BUILD_MEMORY_MB=${{ matrix.memory }}
           cache-from: type=gha,scope=${{ matrix.arch }}
           cache-to: type=gha,scope=${{ matrix.arch }},mode=max
 
