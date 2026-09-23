@@ -67,6 +67,20 @@ test("reasoning intent distinguishes missing, discrete effort, toggle, and budge
     hasReasoningSignal: true,
     hasThinkingBudget: false,
   });
+  assert.deepEqual(policy.extractReasoningIntent("codex/gpt-6-sol-ultra", {}), {
+    model: "codex/gpt-6-sol",
+    effort: "ultra",
+    sourceEffort: "ultra",
+    hasReasoningSignal: true,
+    hasThinkingBudget: false,
+  });
+  assert.deepEqual(policy.extractReasoningIntent("cx/gpt-6-luna-max", {}), {
+    model: "cx/gpt-6-luna",
+    effort: "max",
+    sourceEffort: "max",
+    hasReasoningSignal: true,
+    hasThinkingBudget: false,
+  });
 
   const missing = policy.extractReasoningIntent("openai/gpt-4o", {});
   assert.equal(missing.sourceEffort, "missing");
@@ -87,6 +101,37 @@ test("reasoning intent distinguishes missing, discrete effort, toggle, and budge
   const ordinarySuffixedModel = policy.extractReasoningIntent("custom/my-model-high", {});
   assert.equal(ordinarySuffixedModel.model, "custom/my-model-high");
   assert.equal(ordinarySuffixedModel.sourceEffort, "missing");
+});
+
+test("forced GPT-6 max and ultra follow each model's supported tiers", async () => {
+  await rulesDb.createReasoningRoutingRule(ruleInput({ effortMode: "force", targetEffort: "max" }));
+  for (const model of ["codex/gpt-6-astra", "codex/gpt-6-sol", "cx/gpt-6-luna"]) {
+    const decision = await policy.resolveReasoningRoutingRule({
+      sourceModel: model,
+      sourceEffort: "missing",
+      hasReasoningSignal: false,
+    });
+    assert.equal(decision?.capability, "supported", `${model} max`);
+  }
+
+  await resetStorage();
+  await rulesDb.createReasoningRoutingRule(
+    ruleInput({ effortMode: "force", targetEffort: "ultra" })
+  );
+  for (const model of ["codex/gpt-6-astra", "codex/gpt-6-sol"]) {
+    const decision = await policy.resolveReasoningRoutingRule({
+      sourceModel: model,
+      sourceEffort: "missing",
+      hasReasoningSignal: false,
+    });
+    assert.equal(decision?.capability, "supported", `${model} ultra`);
+  }
+  const luna = await policy.resolveReasoningRoutingRule({
+    sourceModel: "cx/gpt-6-luna",
+    sourceEffort: "missing",
+    hasReasoningSignal: false,
+  });
+  assert.equal(luna?.capability, "unsupported", "GPT-6 Luna has no ultra tier");
 });
 
 test("glob and tag matching use deterministic scope, priority, and exact-model precedence", async () => {

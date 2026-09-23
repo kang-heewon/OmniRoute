@@ -79,8 +79,10 @@ function splitGenericEffortSuffix(model: string): {
 }
 
 function supportsCodexSuffix(candidate: string, normalizedBase: string): boolean {
-  if (candidate === "max") return /^gpt-5\.6-(?:sol|terra|luna)$/.test(normalizedBase);
-  if (candidate === "ultra") return /^gpt-5\.6-(?:sol|terra)$/.test(normalizedBase);
+  if (candidate === "max")
+    return /^gpt-(?:5\.6-(?:sol|terra|luna)|6-(?:astra|sol|luna))$/.test(normalizedBase);
+  if (candidate === "ultra")
+    return /^gpt-(?:5\.6-(?:sol|terra)|6-(?:astra|sol))$/.test(normalizedBase);
   return true;
 }
 
@@ -312,11 +314,11 @@ function capabilityFor(
     if (capabilities.reasoningEffortsOverride && Array.isArray(declaredEfforts)) {
       return "unsupported" as const;
     }
-    const normalized = model.toLowerCase().replace(/^(?:codex|cx)\//, "");
+    const normalized = modelIdForRegistry.toLowerCase();
     const supported =
       targetEffort === "ultra"
-        ? /^gpt-5\.6-(?:sol|terra)(?:-|$)/.test(normalized)
-        : /^gpt-5\.6-(?:sol|terra|luna)(?:-|$)/.test(normalized);
+        ? /^gpt-(?:5\.6-(?:sol|terra)|6-(?:astra|sol))(?:-|$)/.test(normalized)
+        : /^gpt-(?:5\.6-(?:sol|terra|luna)|6-(?:astra|sol|luna))(?:-|$)/.test(normalized);
     if (supported) return "supported" as const;
     if (capabilities.supportsThinking === null) return "unknown" as const;
     return "unsupported" as const;
