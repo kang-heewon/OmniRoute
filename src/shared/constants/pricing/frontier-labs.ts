@@ -4,6 +4,8 @@
  */
 import {
   GPT_6_ASTRA_PRICING,
+  GPT_6_SOL_PRICING,
+  GPT_6_LUNA_PRICING,
   GEMINI_3_7_FLASH_PROMO_PRICING,
   GPT_5_5_PRICING,
   GPT_5_6_LUNA_PRICING,
@@ -25,6 +27,8 @@ export const DEFAULT_PRICING_FRONTIER = {
     // are not represented by this static row. See the GPT-6.1 Sol API model page.
     "gpt-6.1-sol": { input: 2, output: 10, cached: 0.1, reasoning: 10, cache_creation: 2.5 },
     "gpt-6-astra": GPT_6_ASTRA_PRICING,
+    "gpt-6-sol": GPT_6_SOL_PRICING,
+    "gpt-6-luna": GPT_6_LUNA_PRICING,
     "gpt-5.6": GPT_5_6_SOL_PRICING,
     "gpt-5.6-sol": GPT_5_6_SOL_PRICING,
     "gpt-5.6-terra": GPT_5_6_TERRA_PRICING,

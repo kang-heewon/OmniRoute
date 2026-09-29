@@ -210,11 +210,9 @@ export default function ReasoningRoutingRules({
       .trim()
       .toLowerCase()
       .replace(/^[^/]+\//, "");
-    return /^gpt-5\.6-luna(?:-|$)/.test(normalized);
+    return /^gpt-(?:5\.6|6)-luna(?:-|$)/.test(normalized);
   }, [targetModelForCapability]);
 
-  // gpt-5.6-luna accepts `max` but not `ultra`: a saved `ultra` is coerced to
-  // `max` so the editor never re-offers (or re-saves) a tier the upstream 400s.
   const currentTargetEffort =
     isLunaTarget && form.targetEffort === "ultra" ? "max" : form.targetEffort;
 

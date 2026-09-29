@@ -118,6 +118,31 @@ describe("isolated routing editor", () => {
     });
   });
 
+  it("offers GPT-6 Sol ultra and limits GPT-6 Luna to max", async () => {
+    const writes = setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByRole("combobox", { name: "Routing target" }), {
+      target: { value: "model" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: "Effort mode" }), {
+      target: { value: "force" },
+    });
+    const targetModel = screen.getByRole("textbox", { name: "Target model ID / alias" });
+    const targetEffort = screen.getByRole("combobox", {
+      name: "Target effort",
+    }) as HTMLSelectElement;
+    fireEvent.change(targetModel, { target: { value: "codex/gpt-6-sol" } });
+    expect(Array.from(targetEffort.options, (option) => option.value)).toContain("ultra");
+    fireEvent.change(targetEffort, { target: { value: "ultra" } });
+    fireEvent.change(targetModel, { target: { value: "codex/gpt-6-luna" } });
+    expect(Array.from(targetEffort.options, (option) => option.value)).toContain("max");
+    expect(Array.from(targetEffort.options, (option) => option.value)).not.toContain("ultra");
+    expect(targetEffort.value).toBe("max");
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]).toMatchObject({ targetModel: "codex/gpt-6-luna", targetEffort: "max" });
+  });
+
   it("stores a selected source combo NAME while keeping the key scope", async () => {
     const writes = setup();
     fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
