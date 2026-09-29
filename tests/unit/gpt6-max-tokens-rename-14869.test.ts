@@ -107,11 +107,20 @@ test("#14869 gpt-6-astra is not treated as a max_tokens model", () => {
 });
 
 test("#14869 a custom gpt-6 model leaves no max_tokens on the openai body", async () => {
-  // gpt-6-luna is not in the openai registry. A user-added model has no
+  // gpt-6-nova is not in the openai registry. A user-added model has no
   // targetFormat override, so it stays on Chat Completions and must be renamed
   // by the default executor rather than the Responses translator.
-  const body = await invoke({ provider: "openai", model: "gpt-6-luna" });
+  const body = await invoke({ provider: "openai", model: "gpt-6-nova" });
   assert.ok(body, "upstream request was captured");
   assert.equal(body.max_tokens, undefined, "gpt-6 rejects max_tokens");
   assert.equal(body.max_completion_tokens, 2048);
+});
+
+test("#14869 registered GPT-6 Sol and Luna send max_output_tokens on the Responses body", async () => {
+  for (const model of ["gpt-6-sol", "gpt-6-luna"]) {
+    const body = await invoke({ provider: "openai", model });
+    assert.ok(Array.isArray(body?.input), `${model} uses the Responses API`);
+    assert.equal(body.max_tokens, undefined, model);
+    assert.equal(body.max_output_tokens, 2048, model);
+  }
 });

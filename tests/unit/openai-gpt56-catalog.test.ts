@@ -9,9 +9,17 @@ import { DefaultExecutor } from "../../open-sse/executors/default.ts";
 import { resolveChatCoreTargetFormat } from "../../open-sse/handlers/chatCore/targetFormat.ts";
 import { openaiToOpenAIResponsesRequest } from "../../open-sse/translator/request/openai-responses/toResponses.ts";
 
-const EXPECTED_MODELS = ["gpt-6-astra", "gpt-5.6", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"];
+const EXPECTED_MODELS = [
+  "gpt-6-astra",
+  "gpt-6-sol",
+  "gpt-6-luna",
+  "gpt-5.6",
+  "gpt-5.6-sol",
+  "gpt-5.6-terra",
+  "gpt-5.6-luna",
+];
 
-test("OpenAI API catalog puts Astra before GPT-5.6 and keeps GPT-5.4", () => {
+test("OpenAI API catalog puts GPT-6 before GPT-5.6 and keeps GPT-5.4", () => {
   const models = getModelsByProviderId("openai");
 
   assert.deepEqual(
