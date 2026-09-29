@@ -12,13 +12,15 @@ import { openaiToOpenAIResponsesRequest } from "../../open-sse/translator/reques
 const EXPECTED_MODELS = [
   "gpt-6.1-sol",
   "gpt-6-astra",
+  "gpt-6-sol",
+  "gpt-6-luna",
   "gpt-5.6",
   "gpt-5.6-sol",
   "gpt-5.6-terra",
   "gpt-5.6-luna",
 ];
 
-test("OpenAI API catalog puts GPT-6.1 Sol and Astra before GPT-5.6 and keeps GPT-5.4", () => {
+test("OpenAI API catalog puts GPT-6.1 Sol and GPT-6 before GPT-5.6 and keeps GPT-5.4", () => {
   const models = getModelsByProviderId("openai");
 
   assert.deepEqual(

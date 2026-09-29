@@ -186,7 +186,7 @@ function isCodexResponsesLiteRequest(
 function isCodexDelegationDependentModel(model: unknown): boolean {
   const { baseModel, effort } = splitCodexReasoningSuffix(model);
   if (effort === "ultra" && CODEX_ULTRA_ALIAS_MODELS.has(baseModel)) return true;
-  if (effort === "max" && (baseModel === "gpt-5.6-luna" || baseModel === "gpt-6-luna")) return true;
+  if (effort === "max" && baseModel === "gpt-5.6-luna") return true;
   return false;
 }
 
