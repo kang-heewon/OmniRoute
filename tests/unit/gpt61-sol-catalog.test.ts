@@ -6,6 +6,7 @@ import { CodexExecutor } from "../../open-sse/executors/codex.ts";
 import { openaiToOpenAIResponsesRequest } from "../../open-sse/translator/request/openai-responses/toResponses.ts";
 import { getPricingForModel } from "../../src/shared/constants/pricing.ts";
 import { getModelSpec, capMaxOutputTokens } from "../../src/shared/constants/modelSpecs.ts";
+import { getThinkingCapabilityFields } from "../../src/app/api/v1/models/catalogHelpers.ts";
 import {
   computeCostFromPricing,
   getCodexFastCostMultiplier,
@@ -46,6 +47,7 @@ test("GPT-6.1 Sol has separate API and Codex catalog limits", () => {
       assert.equal(entry.supportsVision, true);
       assert.equal(entry.supportsReasoning, true);
       assert.equal(entry.toolCalling, true);
+      assert.deepEqual(entry.supportedThinkingEfforts, EFFORTS);
     }
   }
   const api = getModelsByProviderId("openai").find((entry) => entry.id === MODEL);
@@ -56,6 +58,21 @@ test("GPT-6.1 Sol has separate API and Codex catalog limits", () => {
   assert.deepEqual(api.supportedThinkingEfforts, EFFORTS.slice(0, -1));
   assert.equal(getModelSpec(`openai/${MODEL}`)?.contextWindow, 1050000);
   assert.equal(capMaxOutputTokens(MODEL, 200000), 128000);
+});
+
+test("GPT-6.1 Sol static catalog rows advertise effort tiers without a live Codex sync", () => {
+  for (const provider of ["codex", "codex-app-server"]) {
+    const entry = getModelsByProviderId(provider).find((candidate) => candidate.id === MODEL);
+    assert.ok(entry, provider);
+    const fields = getThinkingCapabilityFields(
+      provider,
+      MODEL,
+      entry.supportsReasoning,
+      entry.supportedThinkingEfforts,
+      false
+    );
+    assert.deepEqual(fields.effort_tiers, EFFORTS, provider);
+  }
 });
 
 test("GPT-6.1 Sol aliases and chat translation preserve max on the Codex wire", () => {
