@@ -7,6 +7,7 @@ import { openaiToOpenAIResponsesRequest } from "../../open-sse/translator/reques
 import { getPricingForModel } from "../../src/shared/constants/pricing.ts";
 import { getModelSpec, capMaxOutputTokens } from "../../src/shared/constants/modelSpecs.ts";
 import { getThinkingCapabilityFields } from "../../src/app/api/v1/models/catalogHelpers.ts";
+import { shouldExposeSyncedEffortVariants } from "../../open-sse/utils/syncedEffortVariants.ts";
 import {
   computeCostFromPricing,
   getCodexFastCostMultiplier,
@@ -72,6 +73,20 @@ test("GPT-6.1 Sol static catalog rows advertise effort tiers without a live Code
       false
     );
     assert.deepEqual(fields.effort_tiers, EFFORTS, provider);
+  }
+});
+
+test("GPT-6.1 Sol effort-suffixed rows never get a second synthetic effort suffix", () => {
+  for (const owner of ["codex", "codex-app-server"]) {
+    assert.equal(
+      shouldExposeSyncedEffortVariants({
+        id: `${MODEL}-ultra`,
+        owned_by: owner,
+        capabilities: { effort_tiers: EFFORTS },
+      }),
+      false,
+      owner
+    );
   }
 });
 
