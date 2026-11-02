@@ -12,6 +12,12 @@ import {
 } from "../../src/lib/usage/costCalculator.ts";
 import { extendCodexGpt56EffortValues } from "../../src/shared/reasoning/effortStandardization.ts";
 import { isCodexExtendedEffortBaseModel } from "../../src/shared/reasoning/codexExtendedEffort.ts";
+import { getThinkingCapabilityFields } from "../../src/app/api/v1/models/catalogHelpers.ts";
+import {
+  appendSyncedEffortVariants,
+  shouldExposeSyncedEffortVariants,
+  SYNCED_EFFORT_SKIP_PROVIDERS,
+} from "../../open-sse/utils/syncedEffortVariants.ts";
 import * as reasoningMetadata from "../../src/lib/vscode/reasoningMetadata.ts";
 import { supportsVscodeServiceTierVariants } from "../../src/lib/vscode/serviceTierVariants.ts";
 
@@ -46,6 +52,7 @@ test("GPT-6.1 Sol has separate API and Codex catalog limits", () => {
       assert.equal(entry.supportsVision, true);
       assert.equal(entry.supportsReasoning, true);
       assert.equal(entry.toolCalling, true);
+      assert.deepEqual(entry.supportedThinkingEfforts, EFFORTS);
     }
   }
   const api = getModelsByProviderId("openai").find((entry) => entry.id === MODEL);
@@ -56,6 +63,55 @@ test("GPT-6.1 Sol has separate API and Codex catalog limits", () => {
   assert.deepEqual(api.supportedThinkingEfforts, EFFORTS.slice(0, -1));
   assert.equal(getModelSpec(`openai/${MODEL}`)?.contextWindow, 1050000);
   assert.equal(capMaxOutputTokens(MODEL, 200000), 128000);
+});
+
+test("GPT-6.1 Sol static catalog rows advertise effort tiers without a live Codex sync", () => {
+  // codex-app-server has no model sync, so its rows come from the static registry.
+  // Without a declared vocabulary /v1/models omits effort_tiers entirely.
+  for (const provider of ["codex", "codex-app-server"]) {
+    const entry = getModelsByProviderId(provider).find((candidate) => candidate.id === MODEL);
+    assert.ok(entry, provider);
+    const fields = getThinkingCapabilityFields(
+      provider,
+      MODEL,
+      entry.supportsReasoning,
+      entry.supportedThinkingEfforts,
+      false
+    );
+    assert.deepEqual(fields.effort_tiers, EFFORTS, provider);
+  }
+});
+
+test("GPT-6.1 Sol effort-suffixed rows never get a second synthetic effort suffix", () => {
+  for (const owner of ["codex", "codex-app-server"]) {
+    assert.equal(
+      shouldExposeSyncedEffortVariants({
+        id: `${MODEL}-ultra`,
+        owned_by: owner,
+        capabilities: { effort_tiers: EFFORTS },
+      }),
+      false,
+      owner
+    );
+  }
+});
+
+test("codex-app-server owns its effort aliases, so no synthetic tier layer is added", () => {
+  // The provider serves the Codex catalog together with its own -<effort> aliases.
+  // A bare synced row is skipped before any tier is appended, so the catalog never
+  // grows ids such as gpt-6.1-sol-high-high.
+  assert.ok(SYNCED_EFFORT_SKIP_PROVIDERS.has("codex-app-server"));
+  const base = {
+    id: MODEL,
+    owned_by: "codex-app-server",
+    name: MODEL,
+    capabilities: { effort_tiers: EFFORTS },
+  };
+  assert.equal(shouldExposeSyncedEffortVariants(base), false);
+  assert.deepEqual(
+    appendSyncedEffortVariants([base]).map((row) => row.id),
+    [MODEL]
+  );
 });
 
 test("GPT-6.1 Sol aliases and chat translation preserve max on the Codex wire", () => {

@@ -19,7 +19,8 @@
  * only when the base model's own `supportedThinkingEfforts` actually declares that tier —
  * never a blind string match.
  *
- * Skipped entirely for `kimi`-owned, and GLM (`glm`, `glm-cn`, `glmt`) models:
+ * Skipped entirely for `codex-app-server` (it serves the Codex catalog together with its
+ * `-{effort}` aliases), `kimi`-owned, and GLM (`glm`, `glm-cn`, `glmt`) models:
  * they already own conflicting `-{effort}` aliases (`getKimiCodeStaticThinkingPolicy`, or `GlmExecutor::parseGlmEffortTier`), so generating
  * another layer here would create invalid nested ids. Other providers skip model ids that
  * already end in a canonical effort token (`-low`, `-high`, `-max`, …). That check does
@@ -34,7 +35,7 @@ import { CANONICAL_EFFORT_VALUES } from "@/shared/reasoning/effortStandardizatio
 import { isDevinLiteralModelIdProvider } from "./devinLiteralModelIds.ts";
 
 /** Provider ids with dedicated `-{effort}` aliases — never synthesize another suffix layer. */
-export const SYNCED_EFFORT_SKIP_PROVIDERS = new Set(["glm", "glm-cn", "glmt"]);
+export const SYNCED_EFFORT_SKIP_PROVIDERS = new Set(["codex-app-server", "glm", "glm-cn", "glmt"]);
 /** Provider-id prefixes covering that mechanism's multiple connection variants (kimi-coding, kimi-coding-apikey). */
 const SYNCED_EFFORT_SKIP_PROVIDER_PREFIXES = ["kimi"];
 

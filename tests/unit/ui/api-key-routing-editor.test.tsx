@@ -8,7 +8,7 @@ import ReasoningRoutingRules from "../../../src/shared/components/ReasoningRouti
 import RoutingPageClient from "../../../src/app/(dashboard)/dashboard/api-manager/routing/RoutingPageClient";
 // The editor's pickers are kit (Radix) Selects since KEA-7886 (Select adapter, `options`
 // mode): no DOM <select>, so changes go through the menu instead of fireEvent.change.
-import { chooseKitSelectValue, kitSelectValue } from "../../helpers/kitSelect";
+import { chooseKitSelectValue, kitSelectOptions, kitSelectValue } from "../../helpers/kitSelect";
 
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams() }));
 
@@ -61,7 +61,13 @@ function setup(options: { failLoad?: boolean; failSave?: boolean } = {}) {
             : url === "/api/providers"
               ? { connections: [] }
               : url === "/api/models/catalog"
-                ? { catalog: { codex: { models: [{ id: "gpt-5.6-luna" }] } } }
+                ? {
+                    catalog: {
+                      codex: {
+                        models: [{ id: "gpt-5.6-luna" }, { id: "gpt-6-sol" }, { id: "gpt-6-luna" }],
+                      },
+                    },
+                  }
                 : { rules };
       return { ok: !options.failLoad, json: async () => data };
     })
@@ -119,6 +125,29 @@ describe("isolated routing editor", () => {
       scope: "apiKey",
       apiKeyId: "key",
     });
+  });
+
+  it("offers GPT-6 Sol ultra and limits GPT-6 Luna to max", async () => {
+    const writes = setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Edit" }));
+    chooseKitSelectValue(screen.getByRole("combobox", { name: "Routing target" }), "model");
+    chooseKitSelectValue(screen.getByRole("combobox", { name: "Effort mode" }), "force");
+    const targetModel = screen.getByRole("combobox", { name: "Target model" });
+    const targetEffort = screen.getByRole("combobox", { name: "Target effort" });
+
+    chooseKitSelectValue(targetModel, "codex/gpt-6-sol");
+    expect(kitSelectOptions(targetEffort).map((option) => option.value)).toContain("ultra");
+    chooseKitSelectValue(targetEffort, "ultra");
+
+    chooseKitSelectValue(targetModel, "codex/gpt-6-luna");
+    expect(kitSelectValue(targetEffort)).toBe("max");
+    const lunaOptions = kitSelectOptions(targetEffort).map((option) => option.value);
+    expect(lunaOptions).toContain("max");
+    expect(lunaOptions).not.toContain("ultra");
+
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await waitFor(() => expect(writes).toHaveLength(1));
+    expect(writes[0]).toMatchObject({ targetModel: "codex/gpt-6-luna", targetEffort: "max" });
   });
 
   it("stores a selected source combo NAME while keeping the key scope", async () => {

@@ -826,6 +826,23 @@ function normalizeCodexWsHeaders(headers: Record<string, string>): Record<string
   return result;
 }
 
+/** Account claim the bearer token was minted for, or null for opaque tokens. */
+function getCodexTokenAccountId(accessToken: unknown): string | null {
+  if (typeof accessToken !== "string") return null;
+  const parts = accessToken.split(".");
+  if (parts.length !== 3 || parts[1].length > 16384) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf8"));
+    const auth = payload?.["https://api.openai.com/auth"];
+    const accountId = auth?.chatgpt_account_id;
+    return typeof accountId === "string" && /^[A-Za-z0-9._:-]{1,200}$/.test(accountId)
+      ? accountId
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Codex Executor - handles OpenAI Codex API (Responses API format)
  * Automatically injects default instructions if missing.
@@ -1216,8 +1233,12 @@ export class CodexExecutor extends BaseExecutor {
     headers.Version = clientVersion;
     setUserAgentHeader(headers, getCodexUserAgent(clientVersion));
 
-    // Add workspace binding header if workspaceId is persisted
-    const workspaceId = credentials?.providerSpecificData?.workspaceId;
+    // Prefer the account claim carried by this bearer token. Older OAuth
+    // connections may have stored an organization ID instead of the token's
+    // account ID; the Codex CLI uses the latter for this header.
+    const workspaceId =
+      getCodexTokenAccountId(credentials?.accessToken) ||
+      credentials?.providerSpecificData?.workspaceId;
     if (typeof workspaceId === "string" && workspaceId) {
       headers["chatgpt-account-id"] = workspaceId;
     }
